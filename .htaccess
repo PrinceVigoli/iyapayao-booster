@@ -1,0 +1,73 @@
+# Apache / LiteSpeed configuration for Iyapayao Booster
+
+Options -Indexes
+ServerSignature Off
+
+# ---------------------------------------------------------------
+# Protect sensitive directories
+# ---------------------------------------------------------------
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(php)$">
+        # Allow PHP in normal directories — deny in config/includes
+    </FilesMatch>
+</IfModule>
+
+# Block direct access to config directory
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Deny access to config/ and includes/
+    RewriteRule ^config/           - [F,L]
+    RewriteRule ^includes/         - [F,L]
+
+    # Deny hidden files (.htaccess, .env, .git, etc.)
+    RewriteRule (^|/)\.            - [F,L]
+
+    # Deny install directory after installation (optional hardening)
+    # Uncomment after installation:
+    # RewriteRule ^install/         - [F,L]
+</IfModule>
+
+# ---------------------------------------------------------------
+# Security headers
+# ---------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ---------------------------------------------------------------
+# Deny direct access to sensitive file types
+# ---------------------------------------------------------------
+<FilesMatch "\.(sql|log|env|ini|sh|bak)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ---------------------------------------------------------------
+# Compression (optional)
+# ---------------------------------------------------------------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript
+</IfModule>
+
+# ---------------------------------------------------------------
+# Caching for static assets
+# ---------------------------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css                  "access plus 1 week"
+    ExpiresByType application/javascript    "access plus 1 week"
+    ExpiresByType image/png                 "access plus 1 month"
+    ExpiresByType image/jpeg                "access plus 1 month"
+    ExpiresByType image/gif                 "access plus 1 month"
+    ExpiresByType image/svg+xml             "access plus 1 month"
+</IfModule>
